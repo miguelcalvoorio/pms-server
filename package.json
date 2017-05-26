@@ -1,0 +1,21 @@
+{
+    "name"       : "pms-server",
+    "version"    : "1.0.0",
+    "description": "Project Manamgenet Suite - Server",
+    "main"       : "server.js",
+    "dependencies": {
+        "express"          : "*",
+        "mongoose"         : "*",
+        "morgan"           : "*",
+        "body-parser"      : "*",
+        "method-override"  : "*",
+        "express-jwt"      : "*",
+        "lodash": "^3.10.0",
+        "mongodb": "^2.1.16",
+        "mongoskin": "^2.1.0",
+        "q": "^1.4.1",
+        "request": "^2.58.0",
+        "rootpath": "^0.1.2"
+    },
+    "license": "n/a"
+}
