@@ -16,4 +16,13 @@ To close issues include "Close #<issue>" in the commit comment
 # Exectution for testing
 nmp start
 
+# Start MongoDB
+./pmsdatabase
+
+# Start MongoDB command line
+mongo
+db.users.remove({}) // Delete all users documents
+
 # Considerations
+1. Reconfigure in config.json database path
+2. Reconfigure secret key in config.json

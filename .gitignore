@@ -8,6 +8,10 @@
 /node_modules
 /bower_components
 
+# database
+/database
+pmsdatabase
+
 # IDEs and editors
 /.idea
 .project

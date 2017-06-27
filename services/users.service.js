@@ -1,37 +1,52 @@
-var config = require('config.json');
-var _ = require('lodash');
-//var jwt = require('jsonwebtoken');
-//var bcrypt = require('bcryptjs');
-var Q = require('q');
-var mongo = require('mongoskin');
-var db = mongo.db(config.connectionString, { native_parser: true });
+var config     = require('config.json');
+var errorCodes = require('errorcodes.json');
+var _          = require('lodash');
+var jwt        = require('jsonwebtoken');
+var bcrypt     = require('bcryptjs');
+var Q          = require('q');
+var mongo      = require('mongoskin');
+
+var db         = mongo.db(config.connectionString, { native_parser: true });
 db.bind('users');
 
 var service = {};
-
-service.test   = test;
-service.getAll = getAll;
-service.create = create;
+service.login        = login;
+service.getAll       = getAll;
+service.getById      = getById;
+service.create       = create;
+service.update       = update;
+service.delete       = _delete;
 
 module.exports = service;
 
-function test() {
-    var deferred = Q.defer();
+function login(username, password) { 
+    var deferred = Q.defer(); 
     
-    db.users.insert(
-        {username: "miguelcalvo", firstname: "Miguel", lastname: "Calvo", age: 40},
-        function (err, doc) {
-            if (err) deferred.reject(err.name + ': ' + err.message);
+    db.users.findOne({ userName: username }, function (err, user) { 
+        if (err) deferred.reject(err.name + ': ' + err.message); 
 
-            deferred.resolve();
-        });
-    
-    return deferred.promise;     
-}
+        if (user && bcrypt.compareSync(password, user.hash)) { 
+            // authentication successful 
+            console.log(jwt.sign({ sub: user._id }, config.secret));
+            deferred.resolve({ 
+                _id: user._id, 
+                userName: user.userName, 
+                firstName: user.firstName, 
+                lastName: user.lastName, 
+                token: jwt.sign({ sub: user._id }, config.secret) 
+            }); 
+        } else { 
+            // authentication failed 
+            deferred.resolve(); 
+        } 
+    }); 
+
+    return deferred.promise; 
+} 
+
 
 function getAll() {
     var deferred = Q.defer();
-    console.log("Ready to insert first user in database");
 
     db.users.find().toArray(function (err, users) {
         if (err) deferred.reject(err.name + ': ' + err.message);
@@ -47,19 +62,41 @@ function getAll() {
     return deferred.promise;
 }
 
+function getById(_id) {
+    var deferred = Q.defer();
+    
+    db.users.findById(_id, function (err, user) {
+        if (err) deferred.reject(err.name + ': ' + err.message);
+        
+        if (user) {
+            // return user (wihtout hashed password)
+            deferred.resolve(_.omit(user, 'hash'));
+        } else {
+            // user not found
+            deferred.resolve();
+        }
+    })
+    
+    return deferred.promise;
+}
+
 
 function create(userParam) {
     var deferred = Q.defer();
 
     // validation
+    console.log('UserName: ' + userParam.userName);
     db.users.findOne(
-        { username: userParam.username },
+        { userName: userParam.userName },
         function (err, user) {
             if (err) deferred.reject(err.name + ': ' + err.message);
 
             if (user) {
                 // username already exists
-                deferred.reject('Username "' + userParam.username + '" is already taken');
+                console.log('User found: %j', user);
+                //deferred.reject('Username "' + userParam.userName + '" is already taken');
+                deferred.reject(errorCodes.errorUserPass);
+                //deferred.reject({errCode: 1001, errMsg: 'fsdljfklsdjf'});
             } else {
                 createUser();
             }
@@ -81,5 +118,53 @@ function create(userParam) {
             });
     }
 
+    return deferred.promise;
+}
+
+function update(_id, userParam) {
+    var deferred = Q.defer();
+    
+    db.users.findById(_id, function(err, user) {
+       if (err) deferred.reject(err.name + ': ' + err.message);
+       
+       // update user
+       updateUser();
+    });
+    
+    function updateUser() {
+        // fields to update
+        var set = {
+            firstName: userParam.firstName,
+            lastName : userParam.lastName,
+        };
+        
+        // update password if it was entered
+        if (userParam.password) {
+            set.hash = bcrypt.hashSync(userParam.password, 10);
+        }
+        
+        db.users.update(
+            { _id: mongo.helper.toObjectID(_id) },
+            { $set: set },
+            function (err, doc) {
+                if (err) deferred.reject(err.name + ': ' + err.message);
+                deferred.resolve();
+            });
+    }
+    
+    return deferred.promise;
+}
+
+function _delete(_id) {
+    var deferred = Q.defer();
+    
+    db.users.remove(
+        { _id: mongo.helper.toObjectID(_id) },
+        function (err) {
+            if (err) deferred.reject(err.name + ': ' + err.message);
+            
+            deferred.resolve();
+        });
+        
     return deferred.promise;
 }
