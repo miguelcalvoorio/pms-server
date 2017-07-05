@@ -7,6 +7,7 @@ var clientService = require('services/clients.service');
 router.post('/new', createClient);
 router.get('/', getAll);
 router.delete('/:_id', deleteClient); 
+router.put('/:_id', updateClient);
 
 module.exports = router;
 
@@ -38,4 +39,14 @@ function deleteClient(req, res) {
         .catch(function (err) {
             res.status(400).send(err);
         });
+}
+
+function updateClient(req, res) {
+    clientService.updateClient(req.params._id, req.body)
+        .then(function () {
+            res.sendStatus(200);
+        })
+        .catch(function (err) {
+            res.status(400).send(err);
+        })
 }

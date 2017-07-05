@@ -13,6 +13,7 @@ var service = {};
 service.createClient = createClient;
 service.getAll       = getAll;
 service.deleteClient = deleteClient;
+service.updateClient = updateClient;
 
 module.exports = service;
 
@@ -35,11 +36,13 @@ function createClient(clientParam) {
     }); 
     
     function createClientData() {
-        if (!checkClientStructure(clientParam)) {
+        var client = _.omit(clientParam, '_id');
+        
+        if (!checkClientStructure(client)) {
             deferred.reject(errorCodes.errorClieDataStruct);
         }
         db.clients.insert(
-            clientParam,
+            client,
             function (err, doc) {
                 if (err) {
                     console.log(err.name + ': ' + err.message);
@@ -91,5 +94,43 @@ function deleteClient(id) {
             deferred.resolve();
         });
         
+    return deferred.promise;
+}
+
+function updateClient(_id, clientParam) {
+    var deferred = Q.defer();
+    
+    db.clients.findById(_id, function(err, client) {
+       if (err) {
+            console.log(err.name + ': ' + err.message); 
+            deferred.reject(errorCodes.errorApplUnknown);
+        }
+       
+       // update client
+       updateClient();
+    });
+    
+    function updateClient() {
+        // fields to update
+        var set = {
+            clientName        : clientParam.clientName,
+            clientServiceGroup: clientParam.clientServiceGroup,
+            clientIndustry    : clientParam.clientIndustry,
+            clientCountry     : clientParam.clientCountry
+        };
+        
+        console.log(set);
+        
+        db.clients.update(
+            { _id: mongo.helper.toObjectID(_id) },
+            { $set: set },
+            function (err, doc) {
+                if (err) {
+                    deferred.reject(errorCodes.errorUpdateDatabase);
+                }
+                deferred.resolve();
+            });
+    }
+    
     return deferred.promise;
 }

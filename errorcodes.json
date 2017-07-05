@@ -1,7 +1,7 @@
 {
     "errorApplUnknown"     : {"errCode": 9000, "errMsg": "Unknown error"},
+    "errorDatabaseUpdate"  : {"errCode": 9001, "errMsg": "Database update operation error"},
     "errorUserPass"        : {"errCode": 1001, "errMsg": "Incorret combination of Username and Password"},
-    "1002"                 : {"errCode": 1002, "errMsg": "Username is already taken"},
     "1003"                 : {"errCode": 1003, "errMsg": "Username is already taken"},
     "errorClieExists"      : {"errCode": 2001, "errMsg": "Client already exists"},
     "errorClieDataStruct"  : {"errCode": 2002, "errMsg": "Invalid client data structure"}
