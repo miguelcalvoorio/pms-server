@@ -11,6 +11,8 @@ db.bind('clients');
 
 var service = {};
 service.createClient = createClient;
+service.getAll       = getAll;
+service.deleteClient = deleteClient;
 
 module.exports = service;
 
@@ -26,7 +28,6 @@ function createClient(clientParam) {
         
         if (client) {
             // Client exist
-            console.log('Client: %j', client);
             deferred.reject(errorCodes.errorClieExists);
         } else {
             createClientData();
@@ -57,4 +58,38 @@ function checkClientStructure(clientData) {
     if (!clientData.clientIndustry)     return false;
     if (!clientData.clientServiceGroup) return false;
     return true;
+}
+
+function getAll() {
+    var deferred = Q.defer();
+    
+    db.clients.find().toArray(function (err, clients) {
+        if (err) {
+            console.log(err.name + ': ' + err.message); 
+            deferred.reject(errorCodes.errorApplUnknown);
+        }
+
+        // return clients
+        clients = _.map(clients);
+        deferred.resolve(clients);
+    });
+
+    return deferred.promise;
+}
+
+function deleteClient(id) {
+    var deferred = Q.defer();
+    
+    db.clients.remove(
+        { _id: mongo.helper.toObjectID(id) },
+        function (err) {
+            if (err) {
+                console.log(err.name + ': ' + err.message); 
+                deferred.reject(errorCodes.errorApplUnknown);
+            }
+            
+            deferred.resolve();
+        });
+        
+    return deferred.promise;
 }
